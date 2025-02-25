@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -29,6 +23,9 @@ model User {
   is_deleted            Boolean   @default(false)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+
+  // Relationships
+  studentProfile        Student?
 }
 
 model UserLoginSession {
@@ -43,4 +40,80 @@ model RefreshToken {
   id          String  @id @unique @default(uuid())
   token       String  @unique
   blacklisted Boolean @default(false)
+}
+
+model Student {
+  id             String     @id @default(uuid())
+  userId         String     @unique
+  dateOfBirth    DateTime?
+  contactInfo    String?
+  address        String?
+  
+  // Relationships
+  user           User       @relation(fields: [userId], references: [id])
+  qualifications Qualification[]
+  applications   Application[]
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model Qualification {
+  id              String    @id @default(uuid())
+  studentId       String
+  level           String    // (12th, Bachelor's, Master's, etc.)
+  institutionName String
+  graduationYear  Int
+  marks          Float?
+  
+  student        Student   @relation(fields: [studentId], references: [id])
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Course {
+  id             String   @id @default(uuid())
+  name           String
+  duration       String
+  tuitionFees    Float
+  overview       String?
+  
+  eligibility    Eligibility[]
+  applications   Application[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Eligibility {
+  id         String  @id @default(uuid())
+  courseId   String
+  testType   String // e.g., IELTS, GMAT, SAT
+  minScore   Float
+
+  course     Course  @relation(fields: [courseId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Application {
+  id          String   @id @default(uuid())
+  studentId   String
+  courseId    String
+  status      ApplicationStatus @default(PENDING) 
+  appliedAt   DateTime  @default(now())
+
+  student     Student  @relation(fields: [studentId], references: [id])
+  course      Course   @relation(fields: [courseId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
